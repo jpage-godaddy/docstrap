@@ -332,12 +332,17 @@ function applyTheme( grunt, definition ) {
 				if ( err ) {return cb( err );}
 				var fullPath = path.join( __dirname, "styles/bootswatch.less" );
 				fs.writeFile( fullPath, swatch.replace( "http://", webProtocol ), cb );
+
+				/**
+				 * This code is of course painfully ugly. It implements a patch to bootswatch v3 that was never released.
+				 * This is the original issue: https://github.com/thomaspark/bootswatch/issues/841
+				 * And this is the patch: https://github.com/thomaspark/bootswatch/pull/916/files
+				 **/
 				fs.readFile(fullPath, 'utf8', function (err,data) {
 					if (err) {
 					  return console.log(err);
 					}
 					var result = data.replace(/\@import\ url/g, '@import (css) url');
-				  console.log("tralala");
 					fs.writeFile(fullPath, result, 'utf8', function (err) {
 					   if (err) return console.log(err);
 					});
