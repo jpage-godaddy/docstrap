@@ -253,6 +253,7 @@ module.exports = function ( grunt ) {
 			_.each( list.themes, function ( entry ) {
 
 				toRun.push( "swatch" + entry.name );
+				console.log(entry.name);
 				grunt.registerTask( "swatch" + entry.name, _.partial( applyTheme, grunt, entry ) );
 
 				var key = "template/static/styles/site." + entry.name.toLowerCase() + ".css";
@@ -331,13 +332,28 @@ function applyTheme( grunt, definition ) {
 				if ( err ) {return cb( err );}
 				var fullPath = path.join( __dirname, "styles/bootswatch.less" );
 				fs.writeFile( fullPath, swatch.replace( "http://", webProtocol ), cb );
+
+				/**
+				 * This code is of course painfully ugly. It implements a patch to bootswatch v3 that was never released.
+				 * This is the original issue: https://github.com/thomaspark/bootswatch/issues/841
+				 * And this is the patch: https://github.com/thomaspark/bootswatch/pull/916/files
+				 **/
+				fs.readFile(fullPath, 'utf8', function (err,data) {
+					if (err) {
+					  return console.log(err);
+					}
+					var result = data.replace(/\@import\ url/g, '@import (css) url');
+					fs.writeFile(fullPath, result, 'utf8', function (err) {
+					   if (err) return console.log(err);
+					});
+				  });
 			} );
 		},
 		function ( cb ) {
 			getBootSwatchComponent( definition.lessVariables, function ( err, swatch ) {
 				if ( err ) {return cb( err );}
 				var fullPath = path.join( __dirname, "styles/variables.less" );
-				fs.writeFile( fullPath, swatch.replace( "http://", webProtocol ), cb );
+				fs.writeFile( fullPath, swatch.replace( "http://", webProtocol ), cb );				  
 			} );
 		}
 	], done );
@@ -354,7 +370,7 @@ function applyTheme( grunt, definition ) {
  * @private
  */
 function getBootSwatchList( done ) {
-	request('http://api.bootswatch.com/3/', function(error, response, body) {
+	request('http://bootswatch.com/api/3.json', function(error, response, body) {
 		if (error) {
 			return done(error);
 		}
